@@ -12,104 +12,68 @@ const productList = document.getElementById("product-list");
 const cartList     = document.getElementById("cart-list");
 const clearBtn     = document.getElementById("clear-cart-btn");
 
-// ────────────────────────────────────────────────
-// Helper functions for sessionStorage
-// ────────────────────────────────────────────────
-
+// Helpers
 function getCart() {
   const saved = sessionStorage.getItem("cart");
-  return saved ? JSON.parse(saved) : [];
+  if (!saved) return [];
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return [];
+  }
 }
 
 function saveCart(cart) {
   sessionStorage.setItem("cart", JSON.stringify(cart));
 }
 
-// ────────────────────────────────────────────────
-// Render cart list
-// ────────────────────────────────────────────────
-
 function renderCart() {
-  cartList.innerHTML = ""; // clear previous content
+  cartList.innerHTML = "";
 
   const cart = getCart();
 
   if (cart.length === 0) {
-    const li = document.createElement("li");
-    li.textContent = "Cart is empty";
-    cartList.appendChild(li);
+    // Do NOT add <li> here → keeps ul empty
     return;
   }
 
-  cart.forEach((item) => {
+  cart.forEach(item => {
     const li = document.createElement("li");
     li.textContent = `\( {item.name} - ₹ \){item.price}`;
     cartList.appendChild(li);
   });
 }
 
-// ────────────────────────────────────────────────
-// Add item to cart
-// ────────────────────────────────────────────────
-
 function addToCart(productId) {
-  // Find the product by id
-  const product = products.find(p => p.id === productId);
+  const product = products.find(p => p.id === Number(productId));
   if (!product) return;
 
-  // Get current cart and add the item (allowing duplicates)
   let cart = getCart();
-  cart.push(product);
+  cart.push({ id: product.id, name: product.name, price: product.price });
 
   saveCart(cart);
   renderCart();
 }
-
-// ────────────────────────────────────────────────
-// Remove item from cart
-// (optional – many test cases don't require it, but included for safety)
-// ────────────────────────────────────────────────
-
-function removeFromCart(productId) {
-  let cart = getCart();
-  // Remove first occurrence only
-  const index = cart.findIndex(item => item.id === productId);
-  if (index !== -1) {
-    cart.splice(index, 1);
-    saveCart(cart);
-    renderCart();
-  }
-}
-
-// ────────────────────────────────────────────────
-// Clear cart
-// ────────────────────────────────────────────────
 
 function clearCart() {
   sessionStorage.removeItem("cart");
   renderCart();
 }
 
-// ────────────────────────────────────────────────
-// Render product list (already partially given)
-// ────────────────────────────────────────────────
-
+// Render products (your original code is fine)
 function renderProducts() {
   products.forEach((product) => {
     const li = document.createElement("li");
-    li.innerHTML = `\( {product.name} - ₹ \){product.price} <button class="add-to-cart-btn" data-id="${product.id}">Add to Cart</button>`;
+    li.innerHTML = `${product.name} - $${product.price} <button class="add-to-cart-btn" data-id="${product.id}">Add to Cart</button>`;
     productList.appendChild(li);
   });
 }
 
-// ────────────────────────────────────────────────
 // Event listeners
-// ────────────────────────────────────────────────
-
 productList.addEventListener("click", (e) => {
   if (e.target.classList.contains("add-to-cart-btn")) {
-    const productId = Number(e.target.dataset.id);
-    addToCart(productId);
+    const id = e.target.getAttribute("data-id");
+    addToCart(id);
   }
 });
 
@@ -117,9 +81,6 @@ if (clearBtn) {
   clearBtn.addEventListener("click", clearCart);
 }
 
-// ────────────────────────────────────────────────
-// Initial render
-// ────────────────────────────────────────────────
-
+// Init
 renderProducts();
-renderCart();           // important – loads persisted cart
+renderCart();   // must call → shows persisted cart or empty
